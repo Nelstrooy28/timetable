@@ -4,7 +4,7 @@
   const DAY_START = 8 * 60;
   const DAY_END = 23 * 60;
   const SNAP_MINUTES = 30;
-  const STORAGE_KEY = "uts-timetable.2026-27SEP.v1";
+  const STORAGE_KEY = "uts-timetable.2026-27SEP.v2";
   const BACKUP_KEY = `${STORAGE_KEY}.backup`;
   const MAX_WEEK_OFFSET = 52;
 
@@ -436,7 +436,7 @@
     text.setAttribute("role", "status");
     text.innerHTML =
       "<strong>No classes this week.</strong>" +
-      "<span>Add one below, or bring back the 13 classes from UTS TimetableHub.</span>";
+      "<span>Add one below, or bring back your saved week of 13 classes.</span>";
     box.appendChild(text);
 
     const add = document.createElement("button");

@@ -1,0 +1,1443 @@
+/* ==========================================================================
+   Timetable
+   A printed weekly sheet: warm stock, ruled columns, muted pencil inks.
+   Direction lives in DESIGN.md. Dials: ENERGY 1 / RHYTHM 2 / MOTION 1.
+   ========================================================================== */
+
+/* ---------------------------------------------------------------- tokens */
+
+:root {
+  --paper: #efe9dc;
+  --surface: #fffdf7;
+  --surface-2: #f6f1e5;
+  --surface-3: #efe8d8;
+
+  --ink: #1b211d;
+  --ink-2: #414c44;
+  --muted: #5c665e;
+
+  --line: #d9d2c3;
+  --line-strong: #a59d8e;
+  --control: #6e675a;
+
+  --accent: #1f5b47;
+  --accent-strong: #154233;
+  --accent-soft: #e2ebe4;
+
+  --danger: #9c2b21;
+  --danger-strong: #7c211a;
+  --danger-soft: #f6e7e3;
+
+  --amber: #7d4a12;
+  --amber-soft: #f3e7d3;
+
+  --radius-sm: 5px;
+  --radius: 8px;
+  --radius-lg: 12px;
+
+  --font-sans: "Segoe UI", "Aptos", system-ui, -apple-system, sans-serif;
+  --font-serif: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+
+  --label-w: 92px;
+  --min-timeline: 900px;
+  --row-h: 94px;
+  --ruler-h: 40px;
+  --target: 44px;
+
+  --ease: 120ms ease;
+}
+
+/* ------------------------------------------------------------------ base */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  color: var(--ink);
+  background: var(--paper);
+  font-family: var(--font-sans);
+  font-size: 14px;
+  line-height: 1.45;
+  -webkit-font-smoothing: antialiased;
+}
+
+button,
+input,
+select {
+  font: inherit;
+  color: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+h1,
+h2,
+p {
+  margin: 0;
+}
+
+[hidden] {
+  display: none !important;
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.app {
+  width: min(1400px, calc(100% - 32px));
+  margin: 0 auto;
+  padding: 20px 0 24px;
+}
+
+/* ----------------------------------------------------------------- sheet */
+
+.schedule {
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+}
+
+/* -------------------------------------------------------------- masthead */
+
+.schedule-head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 16px 20px 14px;
+}
+
+.schedule-id {
+  min-width: 0;
+}
+
+.schedule-id h1 {
+  font-family: var(--font-serif);
+  font-size: clamp(27px, 2.3vw, 34px);
+  font-weight: 500;
+  letter-spacing: -0.022em;
+  line-height: 1;
+}
+
+.schedule-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 7px;
+  margin-top: 7px;
+  color: var(--muted);
+  font-size: 11.5px;
+  font-variant-numeric: tabular-nums;
+}
+
+.schedule-tools {
+  display: flex;
+  flex: none;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+/* --------------------------------------------------------------- buttons */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: var(--target);
+  padding: 0 14px;
+  border: 1px solid var(--control);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--ink);
+  font-size: 12px;
+  font-weight: 650;
+  letter-spacing: 0.005em;
+  transition: background-color var(--ease), border-color var(--ease);
+}
+
+.btn:hover {
+  border-color: var(--ink);
+  background: var(--surface-2);
+}
+
+.btn:active {
+  background: var(--accent-soft);
+}
+
+.btn-primary {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: #fffdf7;
+}
+
+.btn-primary:hover {
+  border-color: var(--accent-strong);
+  background: var(--accent-strong);
+}
+
+.btn-primary:active {
+  background: var(--accent-strong);
+}
+
+.btn-danger {
+  border-color: var(--danger);
+  background: var(--danger);
+  color: #fffdf7;
+}
+
+.btn-danger:hover {
+  border-color: var(--danger-strong);
+  background: var(--danger-strong);
+}
+
+.btn-danger-quiet {
+  margin-right: auto;
+  padding-left: 0;
+  border-color: transparent;
+  background: transparent;
+  color: var(--danger);
+}
+
+.btn-danger-quiet:hover {
+  border-color: transparent;
+  background: var(--danger-soft);
+}
+
+/* -------------------------------------------------------------- week bar */
+
+.week-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 6px 14px 6px 12px;
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+  background: var(--surface-2);
+}
+
+.week-nav {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  min-width: 0;
+}
+
+.week-step {
+  display: grid;
+  place-items: center;
+  width: var(--target);
+  height: var(--target);
+  flex: none;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--ink-2);
+  transition: background-color var(--ease), border-color var(--ease);
+}
+
+.week-step:hover {
+  border-color: var(--line-strong);
+  background: var(--surface);
+  color: var(--ink);
+}
+
+.week-label {
+  padding: 0 4px;
+  font-size: 12.5px;
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.004em;
+  text-align: center;
+}
+
+.week-today {
+  flex: none;
+  min-height: var(--target);
+  padding: 0 12px;
+  border: 1px solid var(--accent);
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--accent);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.week-today:hover {
+  background: var(--accent-soft);
+}
+
+/* --------------------------------------------------------------- timeline */
+
+.schedule-viewport {
+  display: none;
+  overflow-x: auto;
+  overflow-y: hidden;
+  overscroll-behavior-x: contain;
+  background: var(--surface);
+  scrollbar-color: var(--line-strong) transparent;
+  scrollbar-width: thin;
+}
+
+.schedule-viewport::-webkit-scrollbar {
+  height: 10px;
+}
+
+.schedule-viewport::-webkit-scrollbar-thumb {
+  border: 3px solid var(--surface);
+  border-radius: 99px;
+  background: var(--line-strong);
+}
+
+.timeline {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  min-width: var(--min-timeline);
+}
+
+.timeline-top {
+  display: grid;
+  grid-template-columns: var(--label-w) minmax(0, 1fr);
+  min-height: var(--ruler-h);
+  border-bottom: 1px solid var(--line);
+}
+
+.timeline-corner {
+  position: sticky;
+  left: 0;
+  z-index: 5;
+  display: flex;
+  align-items: flex-end;
+  padding: 0 12px 7px;
+  border-right: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--muted);
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.time-ruler {
+  position: relative;
+  height: var(--ruler-h);
+}
+
+.hour-label {
+  position: absolute;
+  top: 50%;
+  color: var(--ink-2);
+  font-size: 10px;
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+  transform: translate(-50%, -50%);
+  white-space: nowrap;
+}
+
+.hour-label.is-first {
+  transform: translate(0, -50%);
+}
+
+.hour-label.is-last {
+  transform: translate(-100%, -50%);
+}
+
+.hour-tick {
+  position: absolute;
+  bottom: 0;
+  height: 6px;
+  border-left: 1px solid var(--line-strong);
+}
+
+/* -------------------------------------------------------------- day rows */
+
+.day-row {
+  display: grid;
+  grid-template-columns: var(--label-w) minmax(0, 1fr);
+  min-height: var(--row-h);
+  border-bottom: 1px solid var(--line);
+}
+
+.day-row:last-child {
+  border-bottom: 0;
+}
+
+.day-label {
+  position: sticky;
+  left: 0;
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 2px;
+  padding: 10px 12px;
+  border-right: 1px solid var(--line);
+  background: var(--surface);
+}
+
+.day-name {
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.1;
+}
+
+.day-date {
+  color: var(--muted);
+  font-size: 10.5px;
+  font-variant-numeric: tabular-nums;
+}
+
+.day-row.is-weekend .day-label,
+.day-row.is-weekend .day-track {
+  background-color: var(--surface-2);
+}
+
+/* Today is a real state, so it earns the one ink rule in the sheet. */
+.day-row.is-today .day-label {
+  box-shadow: inset 3px 0 0 var(--accent);
+  background: var(--accent-soft);
+}
+
+.day-row.is-today .day-name {
+  color: var(--accent-strong);
+}
+
+.day-row.is-today .day-date {
+  color: var(--accent);
+}
+
+.day-track {
+  position: relative;
+  min-width: 0;
+  height: var(--row-h);
+  background-color: var(--surface);
+  background-image:
+    linear-gradient(to right, rgba(27, 33, 29, 0.085) 1px, transparent 1px),
+    linear-gradient(to right, rgba(27, 33, 29, 0.03) 1px, transparent 1px);
+  background-size: calc(100% / 15) 100%, calc(100% / 30) 100%;
+}
+
+.day-row.is-drop-target .day-track {
+  background-color: color-mix(in srgb, var(--accent) 6%, var(--surface));
+}
+
+/* ------------------------------------------------------------------ cards */
+
+.class-card {
+  position: absolute;
+  top: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  height: calc(100% - 12px);
+  overflow: hidden;
+  padding: 8px 10px;
+  border: 1px solid color-mix(in srgb, var(--c) 52%, var(--ink));
+  border-radius: var(--radius);
+  background: color-mix(in srgb, var(--c) 6%, var(--surface));
+  color: var(--ink);
+  text-align: left;
+  container-type: inline-size;
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+  transition: background-color var(--ease), border-color var(--ease), opacity var(--ease);
+}
+
+.class-card:hover {
+  border-color: var(--ink);
+  background: color-mix(in srgb, var(--c) 10%, var(--surface));
+}
+
+.class-card:active {
+  cursor: grabbing;
+}
+
+.class-card:focus-visible {
+  z-index: 4;
+  outline: 2px solid var(--ink);
+  outline-offset: 2px;
+}
+
+.class-card.is-dragging {
+  opacity: 0.18;
+}
+
+.cc-top {
+  display: flex;
+  align-items: baseline;
+  gap: 5px;
+  min-width: 0;
+  line-height: 1.15;
+}
+
+.cc-dot {
+  width: 7px;
+  height: 7px;
+  flex: none;
+  border-radius: 2px;
+  background: var(--c);
+  transform: translateY(-1px);
+}
+
+.cc-code {
+  overflow: hidden;
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: 0.005em;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cc-type {
+  flex: none;
+  margin-left: auto;
+  color: var(--ink-2);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+}
+
+.cc-name {
+  display: -webkit-box;
+  overflow: hidden;
+  font-size: 10.5px;
+  font-weight: 500;
+  line-height: 1.22;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.cc-meta {
+  display: flex;
+  align-items: baseline;
+  gap: 5px;
+  min-width: 0;
+  margin-top: auto;
+  padding-top: 2px;
+  color: var(--ink-2);
+  font-size: 10px;
+  line-height: 1.2;
+  font-variant-numeric: tabular-nums;
+}
+
+.cc-time {
+  flex: none;
+  font-weight: 650;
+}
+
+.cc-venue {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cc-venue::before {
+  content: "·";
+  margin-right: 5px;
+  color: var(--muted);
+}
+
+/* A one-hour class gets a narrow card: code and start time, nothing else. */
+.class-card.is-compact {
+  gap: 2px;
+  padding: 6px 5px;
+}
+
+.class-card.is-compact .cc-name,
+.class-card.is-compact .cc-type,
+.class-card.is-compact .cc-venue {
+  display: none;
+}
+
+.class-card.is-compact .cc-code {
+  font-size: 9px;
+  letter-spacing: 0;
+  line-height: 1.1;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+.class-card.is-compact .cc-time {
+  display: inline;
+  font-size: 9px;
+  font-weight: 600;
+}
+
+/* Cards are as wide as the class is long, so step the density down by width.
+   The ruler already says when, which is why the time leaves before the room. */
+@container (max-width: 140px) {
+  .cc-type {
+    display: none;
+  }
+}
+
+@container (max-width: 118px) {
+  .cc-time {
+    display: none;
+  }
+
+  .cc-venue::before {
+    content: none;
+  }
+}
+
+@container (max-width: 70px) {
+  .cc-name,
+  .cc-venue,
+  .cc-sep,
+  .cc-end {
+    display: none;
+  }
+
+  .cc-time {
+    display: inline;
+  }
+}
+
+/* --------------------------------------------------------------- now line */
+
+.now-line {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  z-index: 2;
+  width: 2px;
+  background: var(--accent);
+  pointer-events: none;
+}
+
+.now-line::before {
+  content: "";
+  position: absolute;
+  top: -3px;
+  left: -3px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--accent);
+}
+
+/* --------------------------------------------------------------- dragging */
+
+.drag-ghost {
+  position: fixed;
+  z-index: 9999;
+  margin: 0;
+  pointer-events: none;
+  opacity: 0.97;
+  box-shadow: 0 22px 40px -20px rgba(20, 28, 24, 0.55);
+  cursor: grabbing;
+}
+
+.drop-preview {
+  position: absolute;
+  top: 6px;
+  bottom: 6px;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  padding: 4px;
+  border: 2px dashed var(--accent);
+  border-radius: var(--radius);
+  background: var(--accent-soft);
+  color: var(--accent-strong);
+  font-size: 9.5px;
+  font-weight: 700;
+  text-align: center;
+}
+
+.drop-preview.is-invalid {
+  border-color: var(--danger);
+  background: var(--danger-soft);
+  color: var(--danger);
+}
+
+/* ---------------------------------------------------------------- agenda */
+
+.agenda {
+  display: block;
+  background: var(--surface);
+}
+
+.agenda-day {
+  border-bottom: 1px solid var(--line);
+}
+
+.agenda-day:last-child {
+  border-bottom: 0;
+}
+
+.agenda-day-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 9px 14px 8px;
+  background: var(--surface-2);
+  border-bottom: 1px solid var(--line);
+}
+
+.agenda-day-name {
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: -0.005em;
+}
+
+.agenda-day-date {
+  margin-left: 6px;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+}
+
+.agenda-day-count {
+  flex: none;
+  color: var(--muted);
+  font-size: 10.5px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.agenda-day.is-today .agenda-day-head {
+  box-shadow: inset 3px 0 0 var(--accent);
+  background: var(--accent-soft);
+}
+
+.agenda-day.is-today .agenda-day-name {
+  color: var(--accent-strong);
+}
+
+.agenda-day.is-weekend .agenda-day-head {
+  background: var(--surface-3);
+}
+
+.agenda-item {
+  display: grid;
+  grid-template-columns: 52px minmax(0, 1fr);
+  gap: 12px;
+  width: 100%;
+  padding: 11px 14px;
+  border: 0;
+  background: color-mix(in srgb, var(--c) 4%, var(--surface));
+  text-align: left;
+  transition: background-color var(--ease);
+}
+
+.agenda-item + .agenda-item {
+  border-top: 1px solid var(--line);
+}
+
+.agenda-item:hover {
+  background: color-mix(in srgb, var(--c) 9%, var(--surface));
+}
+
+.agenda-item:active {
+  background: color-mix(in srgb, var(--c) 14%, var(--surface));
+}
+
+.agenda-time {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.25;
+}
+
+.agenda-time-start {
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.agenda-time-end {
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.agenda-body {
+  min-width: 0;
+}
+
+.agenda-top {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.agenda-code {
+  overflow: hidden;
+  font-size: 12px;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.agenda-type {
+  flex: none;
+  margin-left: 6px;
+  color: var(--ink-2);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+}
+
+.agenda-name {
+  display: block;
+  margin-top: 2px;
+  color: var(--ink-2);
+  font-size: 12px;
+  line-height: 1.3;
+}
+
+.agenda-venue {
+  display: block;
+  margin-top: 3px;
+  overflow: hidden;
+  color: var(--muted);
+  font-size: 10.5px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.agenda-free {
+  padding: 9px 14px 11px;
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.agenda-lecturer {
+  display: none;
+}
+
+/* Tablet widths get a lecturer column rather than empty row ends. */
+@media (min-width: 600px) {
+  .agenda-item {
+    grid-template-columns: 52px minmax(0, 1fr) minmax(0, 210px);
+  }
+
+  .agenda-lecturer {
+    display: block;
+    align-self: center;
+    overflow: hidden;
+    color: var(--muted);
+    font-size: 10.5px;
+    letter-spacing: 0.01em;
+    text-align: right;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}
+
+/* ------------------------------------------------------ grid messages */
+
+.grid-loading,
+.grid-empty,
+.grid-error,
+.noscript-note {
+  padding: 28px 20px;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.55;
+  text-align: center;
+}
+
+.grid-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  padding: 40px 20px 44px;
+  border-bottom: 1px solid var(--line);
+  background: var(--surface-2);
+}
+
+.grid-empty-text {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+}
+
+.grid-empty strong {
+  color: var(--ink);
+  font-family: var(--font-serif);
+  font-size: 21px;
+  font-weight: 600;
+}
+
+.grid-empty-text > span {
+  max-width: 44ch;
+}
+
+.grid-empty .btn {
+  margin-top: 12px;
+}
+
+.grid-error {
+  color: var(--danger);
+}
+
+.grid-error strong {
+  display: block;
+  margin-bottom: 4px;
+  color: var(--ink);
+  font-family: var(--font-serif);
+  font-size: 19px;
+}
+
+.grid-error .btn {
+  margin-top: 14px;
+}
+
+.noscript-note {
+  border-top: 1px solid var(--line);
+  background: var(--amber-soft);
+  color: var(--amber);
+}
+
+/* ---------------------------------------------------------------- footer */
+
+.schedule-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 9px 16px;
+  border-top: 1px solid var(--line);
+  background: var(--surface-2);
+  color: var(--muted);
+  font-size: 10.5px;
+  line-height: 1.5;
+}
+
+.foot-hint {
+  min-width: 0;
+}
+
+.mobile-hint {
+  display: none;
+}
+
+.foot-state {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  flex: none;
+}
+
+.status {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 650;
+}
+
+.status-mark {
+  width: 6px;
+  height: 6px;
+  flex: none;
+  border-radius: 1px;
+  background: var(--accent);
+}
+
+.status.is-edited .status-mark {
+  background: var(--amber);
+}
+
+.status.is-edited #statusText {
+  color: var(--amber);
+}
+
+.foot-sep {
+  color: var(--line-strong);
+}
+
+#saveState.is-error {
+  color: var(--danger);
+  font-weight: 650;
+}
+
+/* ---------------------------------------------------------------- modals */
+
+.modal {
+  width: min(640px, calc(100vw - 32px));
+  max-height: calc(100dvh - 32px);
+  margin: auto;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--ink);
+}
+
+.modal-small {
+  width: min(440px, calc(100vw - 32px));
+}
+
+.modal::backdrop {
+  background: rgba(24, 30, 26, 0.52);
+}
+
+.modal-inner {
+  max-height: calc(100dvh - 32px);
+  overflow-y: auto;
+  padding: 22px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  box-shadow: 0 24px 60px -24px rgba(20, 30, 25, 0.42);
+}
+
+.modal-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.modal-kicker {
+  margin-bottom: 4px;
+  color: var(--accent);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.modal-head h2 {
+  font-family: var(--font-serif);
+  font-size: 25px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+}
+
+.icon-close {
+  display: grid;
+  place-items: center;
+  width: var(--target);
+  height: var(--target);
+  flex: none;
+  padding: 0;
+  border: 1px solid var(--control);
+  border-radius: var(--radius);
+  background: transparent;
+  color: var(--ink-2);
+  font-size: 20px;
+  line-height: 1;
+}
+
+.icon-close:hover {
+  border-color: var(--ink);
+  background: var(--surface-2);
+  color: var(--ink);
+}
+
+.modal-copy {
+  margin-top: 14px;
+  color: var(--ink-2);
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 13px;
+  margin-top: 18px;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 0;
+}
+
+.field > span {
+  color: var(--ink-2);
+  font-size: 10.5px;
+  font-weight: 650;
+}
+
+.field input,
+.field select {
+  width: 100%;
+  min-height: var(--target);
+  padding: 9px 10px;
+  border: 1px solid var(--control);
+  border-radius: 7px;
+  background: var(--surface);
+  color: var(--ink);
+  font-size: 12px;
+  transition: border-color var(--ease), box-shadow var(--ease);
+}
+
+.field input:focus,
+.field select:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+  outline: none;
+}
+
+.field input::placeholder {
+  color: var(--muted);
+}
+
+.time-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.time-row input {
+  min-width: 0;
+}
+
+.time-row span {
+  flex: none;
+  color: var(--ink-2);
+  font-size: 10px;
+}
+
+.form-error {
+  min-height: 18px;
+  margin-top: 9px;
+  color: var(--danger);
+  font-size: 11px;
+  font-weight: 650;
+  line-height: 1.4;
+}
+
+.modal-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid var(--line);
+}
+
+.modal-spacer {
+  flex: 1;
+}
+
+/* ----------------------------------------------------------------- toast */
+
+.toast {
+  position: fixed;
+  bottom: 18px;
+  left: 50%;
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  max-width: min(560px, calc(100vw - 24px));
+  padding: 8px 10px 8px 13px;
+  border-radius: var(--radius);
+  background: var(--ink);
+  color: #f7f3e8;
+  box-shadow: 0 18px 40px -16px rgba(0, 0, 0, 0.45);
+  opacity: 0;
+  pointer-events: none;
+  transform: translate(-50%, 10px);
+  transition: opacity 0.18s ease, transform 0.18s ease;
+}
+
+.toast.is-visible {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translate(-50%, 0);
+}
+
+.toast-icon {
+  display: grid;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  flex: none;
+  border-radius: 50%;
+  background: var(--accent);
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.toast.is-error .toast-icon {
+  background: var(--danger);
+}
+
+.toast-message {
+  font-size: 11.5px;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.toast-undo {
+  min-height: var(--target);
+  flex: none;
+  padding: 6px 4px 6px 12px;
+  border: 0;
+  border-left: 1px solid rgba(247, 243, 232, 0.25);
+  background: transparent;
+  color: #bfe0cd;
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.toast-undo:focus-visible {
+  outline: 2px solid #f7f3e8;
+  outline-offset: 2px;
+}
+
+/* ------------------------------------------------------------ responsive */
+
+/* Below 940px the sheet cannot hold 15 hours of columns. The agenda is a
+   different composition of the same week, not a squeezed grid. */
+@media (min-width: 940px) {
+  .schedule-viewport {
+    display: block;
+  }
+
+  .agenda {
+    display: none;
+  }
+}
+
+@media (max-width: 939px) {
+  .app {
+    width: calc(100% - 20px);
+    padding: 10px 0 16px;
+  }
+
+  .schedule-head {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+    padding: 14px;
+  }
+
+  .schedule-id h1 {
+    font-size: 27px;
+  }
+
+  .schedule-tools {
+    justify-content: flex-start;
+  }
+
+  .week-bar {
+    padding: 4px 8px 4px 6px;
+  }
+
+  .week-nav {
+    flex: 1;
+    justify-content: center;
+  }
+
+  .week-label {
+    font-size: 12px;
+  }
+
+  .schedule-foot {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+    padding: 10px 14px;
+  }
+
+  .foot-hint {
+    display: none;
+  }
+
+  .mobile-hint {
+    display: inline;
+  }
+
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .modal-inner {
+    padding: 18px;
+  }
+
+  .modal-head h2 {
+    font-size: 22px;
+  }
+}
+
+@media (max-width: 560px) {
+  .schedule-tools {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+
+  .schedule-tools .btn {
+    width: 100%;
+    padding: 0 10px;
+  }
+}
+
+@media (max-width: 420px) {
+  .agenda-item {
+    grid-template-columns: 48px minmax(0, 1fr);
+    gap: 10px;
+    padding: 10px 12px;
+  }
+
+  .agenda-day-head {
+    padding: 8px 12px;
+  }
+
+  .modal {
+    width: calc(100vw - 20px);
+  }
+
+  .modal-small {
+    width: calc(100vw - 20px);
+  }
+
+  .modal-inner {
+    padding: 16px;
+  }
+
+  .modal-actions {
+    gap: 6px;
+  }
+
+  .modal-actions .btn {
+    padding: 0 11px;
+    font-size: 11px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+  }
+}
+
+@media (forced-colors: active) {
+  .class-card,
+  .agenda-item,
+  .btn,
+  .week-step {
+    border: 1px solid ButtonText;
+  }
+
+  .status-mark,
+  .cc-dot {
+    background: CanvasText;
+  }
+}
+
+/* ------------------------------------------------------------------ print */
+
+@media print {
+  @page {
+    size: A4 landscape;
+    margin: 8mm;
+  }
+
+  body {
+    background: #fff !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .app {
+    width: 100%;
+    padding: 0;
+  }
+
+  .schedule {
+    border: 0;
+    border-radius: 0;
+  }
+
+  .schedule-head {
+    padding: 0 0 8px;
+  }
+
+  .schedule-tools,
+  .week-step,
+  .week-today,
+  .schedule-foot,
+  .toast,
+  .modal,
+  .noscript-note,
+  .now-line {
+    display: none !important;
+  }
+
+  .week-bar {
+    padding: 4px 0 6px;
+    border-top: 0;
+    background: transparent;
+  }
+
+  .week-label {
+    text-align: left;
+  }
+
+  .schedule-viewport {
+    display: block !important;
+    overflow: visible;
+  }
+
+  .agenda {
+    display: none !important;
+  }
+
+  .timeline {
+    min-width: 0;
+  }
+
+  .timeline-top,
+  .day-row {
+    grid-template-columns: 60px minmax(0, 1fr);
+  }
+
+  .day-row {
+    min-height: 84px;
+  }
+
+  .day-track {
+    height: 84px;
+  }
+
+  .class-card {
+    top: 4px;
+    height: calc(100% - 8px);
+  }
+
+  .drag-ghost,
+  .drop-preview {
+    display: none !important;
+  }
+}
